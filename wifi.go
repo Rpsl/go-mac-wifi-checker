@@ -48,6 +48,7 @@ func main() {
             time.Sleep(sleep)
         }
     }
+
 }
 
 func restartWifi(eth string) {
