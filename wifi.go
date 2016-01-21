@@ -8,7 +8,6 @@ import "flag"
 import "strings"
 
 func main() {
-
 	// TODO move arguments parsing in fuction
 	var timeout = flag.String("timeout", "2s", "timeout for checks, 2 seconds by default")
 	var allowed = true
