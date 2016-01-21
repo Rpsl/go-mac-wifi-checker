@@ -5,6 +5,7 @@ import "time"
 import "os/exec"
 import "log"
 import "flag"
+
 import "strings"
 
 func main() {
@@ -42,16 +43,8 @@ func main() {
 			err = exec.Command("ping", "-c", "2", "8.8.8.8").Run()
 
 			if err != nil {
-				allowed = false
-			} else {
-				allowed = true
-			}
-
-			if allowed == false {
 				restartWifi(string(eth))
 			}
-
-			log.Println("tick")
 
 			time.Sleep(sleep)
 		}
