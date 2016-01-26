@@ -1,41 +1,48 @@
 package main
 
 // import "fmt"
-import "time"
-import "os/exec"
-import "log"
-import "flag"
-
-import "strings"
+import (
+    "time"
+    "os/exec"
+    "log"
+    "os"
+    "github.com/codegangsta/cli"
+    "strings"
+)
 
 func main() {
-    // TODO move arguments parsing in fuction
-    var timeout = flag.String("timeout", "2s", "timeout for checks, 2 seconds by default")
+  app := cli.NewApp()
+  app.Name = "Go Wifi checker"
+  app.Usage = ""
+  app.HideVersion = true
 
-    flag.Parse()
+  var timeout string
+  app.Flags = []cli.Flag {
+    cli.StringFlag{
+      Name:        "timeout, t",
+      Value:       "2s",
+      Usage:       "timeout between checks",
+      Destination: &timeout,
+    },
+  }
 
-    sleep, err := time.ParseDuration(*timeout)
+  app.Action = func(c *cli.Context) {
+    loop(timeout)
+  }
 
-    if err != nil {
-        log.Fatalln("Incorrect usage of --timeout param; Pls use like --timeout=5s")
-    }
+  app.Run(os.Args)
+}
 
-    if sleep < time.Duration(time.Second) {
-        log.Fatal("Timeout can't be less than 1s")
-    }
+func loop(timeout string) {
 
-    cmd := "networksetup -listallhardwareports | fgrep Wi-Fi -A1 | awk 'NF==2{print $2}'"
-    eth, err := exec.Command("bash", "-c", cmd).Output()
+    sleep := checkParams(timeout)
+    eth := getWifiInterface()
 
-    if err != nil {
-        log.Fatal("Can't detect wifi interface")
-    }
-
-    log.Printf("Starting checking interface %s with timeout %s", strings.Trim(string(eth), "\n "), sleep.String())
+    log.Printf("Start checking interface %s with timeout %s", eth, sleep.String())
 
     for {
 
-        enabled, err := exec.Command("networksetup", "getairportpower", strings.Trim(string(eth), "\n ")).Output()
+        enabled, err := exec.Command("networksetup", "getairportpower", eth).Output()
 
         if strings.Contains(strings.Trim(string(enabled), "\n "), "On") {
 
@@ -49,6 +56,31 @@ func main() {
         }
     }
 
+}
+
+func checkParams(timeout string) time.Duration {
+    sleep, err := time.ParseDuration(timeout)
+
+    if err != nil {
+        log.Fatalln("Incorrect usage of --timeout param; Pls use like --timeout=5s")
+    }
+
+    if sleep < time.Duration(time.Second) {
+        log.Fatal("Timeout can't be less than 1s")
+    }
+
+    return sleep
+}
+
+func getWifiInterface() string {
+    cmd := "networksetup -listallhardwareports | fgrep Wi-Fi -A1 | awk 'NF==2{print $2}'"
+    eth, err := exec.Command("bash", "-c", cmd).Output()
+
+    if err != nil {
+        log.Fatal("Can't detect wifi interface")
+    }
+
+    return strings.Trim(string(eth), " \n")
 }
 
 func restartWifi(eth string) {
