@@ -17,6 +17,7 @@ func main() {
 	app.HideVersion = true
 
 	var timeout string
+	var eth string
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "timeout, t",
@@ -24,19 +25,27 @@ func main() {
 			Usage:       "timeout between checks",
 			Destination: &timeout,
 		},
+		cli.StringFlag{
+			Name:        "eth, e",
+			Value:       "",
+			Usage:       "eth device",
+			Destination: &eth,
+		},
 	}
 
 	app.Action = func(c *cli.Context) {
-		loop(timeout)
+		loop(timeout, eth)
 	}
 
 	app.Run(os.Args)
 }
 
-func loop(timeout string) {
+func loop(timeout, eth string) {
 
 	sleep := checkParams(timeout)
-	eth := getWifiInterface()
+	if eth == "" {
+		eth = getWifiInterface()
+	}
 
 	log.Printf("Start checking interface %s with timeout %s", eth, sleep.String())
 
